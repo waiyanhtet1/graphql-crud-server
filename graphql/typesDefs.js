@@ -16,7 +16,7 @@ module.exports = `#graphql
     username: String!
     email:String!
     password: String!
-    token: String!
+    token: String
   }
 
   input LoginInput {

@@ -1,6 +1,6 @@
 const { GraphQLError } = require("graphql");
-const Recipe = require("../models/Recipe");
-const User = require("../models/User");
+const Recipe = require("../../models/Recipe");
+const User = require("../../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -64,7 +64,7 @@ module.exports = {
 
       // throw error if user exit
       if (isUserExit)
-        throw GraphQLError("User is already registered", {
+        throw new GraphQLError("User is already registered", {
           extensions: {
             code: "BAD_USER_INPUT",
           },
@@ -101,11 +101,19 @@ module.exports = {
       // check is user exit with email
       const user = await User.findOne({ email });
 
+      if (!user) {
+        throw new GraphQLError("No User found with this email", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+          },
+        });
+      }
+
       // compare input password and hashed password
-      if (user && bcrypt.compare(password, user.password)) {
+      if (user && (await bcrypt.compare(password, user.password))) {
         // create new token
         const token = jwt.sign(
-          { user_id: newUser._id, email },
+          { user_id: user._id, email },
           process.env.SECRET_JWT,
           { expiresIn: "1d" }
         );
@@ -119,7 +127,7 @@ module.exports = {
         };
       } else {
         // return if not user found
-        throw GraphQLError("Incorrect Password", {
+        throw new GraphQLError("Incorrect Password", {
           extensions: {
             code: "BAD_USER_INPUT",
           },
